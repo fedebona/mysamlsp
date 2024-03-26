@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Auth Page assertion ";
+}
+
+@{
+    var data = (Dictionary<string, string>)ViewBag.Message;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Auth Page assertion result</p>
+    <p>
+        Exception: @if (data != null)
+        {
+            @data["Exception"]
+        }
+    </p>
+    <p>
+        StackTrace: @if (data != null)
+        {
+            @data["StackTrace"]
+        }
+    </p>
+</div>

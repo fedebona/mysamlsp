@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Sample SAML 2 Service Provider</h1>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <h2>Current users Claims</h2>
+        <p>
+            @foreach (var claim in User.Claims)
+            {
+                <strong>@claim.Type</strong> <br /> <span style="padding-left: 10px">Value: @claim.Value</span> <br />
+            }
+        </p>
+    }
+    else
+    {
+        <p>User not authenticated</p>
+    }
+
+    
+</div>
