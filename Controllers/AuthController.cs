@@ -6,6 +6,8 @@ using ITfoxtec.Identity.Saml2.Schemas;
 using System.Security.Authentication;
 using System.Security.Claims;
 using mysamlsp.Identity;
+using System.Web;
+using System;
 
 namespace mysamlsp.Controllers
 {
@@ -31,7 +33,8 @@ namespace mysamlsp.Controllers
         {
             var binding = new Saml2RedirectBinding();
             binding.SetRelayStateQuery(new Dictionary<string, string> { { relayStateReturnUrl, returnUrl ?? Url.Content("~/") } });
-
+            //read a key from appsettings.json
+            //config.Issuer = 
             return binding.Bind(new Saml2AuthnRequest(config)
             {
                 //ForceAuthn = true,
@@ -46,21 +49,77 @@ namespace mysamlsp.Controllers
             }).ToActionResult();
         }
 
+        [Route("LoginForm")]
+        public IActionResult LoginForm(string returnUrl = null)
+        {
+
+            var binding = new Saml2PostBinding();
+            var saml2LoginRequest = new Saml2AuthnRequest(config)
+            {
+                //ForceAuthn = true,
+                RequestedAuthnContext = new RequestedAuthnContext
+                {
+                    Comparison = AuthnContextComparisonTypes.Exact,
+                    AuthnContextClassRef = new string[]
+                    {
+                        "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+                    },
+                },
+            };
+
+            ViewBag.Message = new Dictionary<string, string> { { "Content", binding.Bind(saml2LoginRequest).PostContent } };
+            return View();
+
+        }
+
+        //This method is used to create a login request and return the SAMLRequest and IdPUrl
+        //The SAMLRequest is not base64 encoded but inflated
+        [HttpGet]
+        [Route("LoginRequestCreate")]
+        public IActionResult LoginRequestCreate(string returnUrl = null)
+        {
+            var binding = new Saml2RedirectBinding();
+            binding.SetRelayStateQuery(new Dictionary<string, string> { { relayStateReturnUrl, returnUrl ?? Url.Content("~/") } });
+            //read a key from appsettings.json
+            //config.Issuer = 
+            var calculatedBinding = binding.Bind(new Saml2AuthnRequest(config)
+            {
+                //ForceAuthn = true,
+                RequestedAuthnContext = new RequestedAuthnContext
+                {
+                    Comparison = AuthnContextComparisonTypes.Exact,
+                    AuthnContextClassRef = new string[]
+                    {
+                        "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+                    },
+                },
+            });
+
+            var message = new Dictionary<string, string> {
+                { "IdPUrl", calculatedBinding.RedirectLocation.GetLeftPart(UriPartial.Path)},
+                { "SAMLRequest", HttpUtility.ParseQueryString(calculatedBinding.RedirectLocation.Query)["SAMLRequest"] }
+            };
+            return Json(message);
+        }
 
         [Route("AssertionConsumerService")]
         public async Task<IActionResult> AssertionConsumerService()
         {
             var binding = new Saml2PostBinding();
             var saml2AuthnResponse = new Saml2AuthnResponse(config);
+            var currentStage = "";
             try
             {
 
                 binding.ReadSamlResponse(Request.ToGenericHttpRequest(validate: true), saml2AuthnResponse);
+                currentStage = "response read";
                 if (saml2AuthnResponse.Status != Saml2StatusCodes.Success)
                 {
                     throw new AuthenticationException($"SAML Response status: {saml2AuthnResponse.Status}");
                 }
+                currentStage = string.Format("response status {0}", saml2AuthnResponse.Status);
                 binding.Unbind(Request.ToGenericHttpRequest(validate: true), saml2AuthnResponse);
+                currentStage = string.Format("Unbind");
                 await saml2AuthnResponse.CreateSession(HttpContext, claimsTransform: (claimsPrincipal) => ClaimsTransform.Transform(CheckAssurance(claimsPrincipal)));
 
                 var relayStateQuery = binding.GetRelayStateQuery();
@@ -70,7 +129,7 @@ namespace mysamlsp.Controllers
             catch (Exception ex)
             {
 
-                ViewBag.Message = new Dictionary<string, string> { { "Exception", ex.Message }, { "StackTrace", ex.StackTrace} };
+                ViewBag.Message = new Dictionary<string, string> { { "Stage", currentStage }, { "Exception", ex.Message }, { "StackTrace", ex.StackTrace } };
                 return View();
             }
         }

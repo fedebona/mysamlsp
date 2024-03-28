@@ -37,6 +37,8 @@ builder.Services.BindConfig<Saml2Configuration>(builder.Configuration, "Saml2", 
         {
             saml2Configuration.SignAuthnRequest = entityDescriptor.IdPSsoDescriptor.WantAuthnRequestsSigned.Value;
         }
+        //cast the string to the enum
+        saml2Configuration.CertificateValidationMode = (System.ServiceModel.Security.X509CertificateValidationMode)Enum.Parse(typeof(System.ServiceModel.Security.X509CertificateValidationMode), builder.Configuration["Saml2:CertificateValidationMode"]);
         saml2Configuration.Issuer = builder.Configuration["Saml2:Issuer"];
     }
     else

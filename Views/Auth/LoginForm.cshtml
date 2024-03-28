@@ -1,0 +1,18 @@
+﻿@{
+    ViewData["Title"] = "Form Login ";
+}
+
+@{
+    var data = (Dictionary<string, string>)ViewBag.Message;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Authentication request</p>
+    <textarea rows="32" cols="120" name="contenuto" form="loginForm">
+        @if (data != null)
+        {
+            @data["Content"]
+        }
+   </textarea>
+</div>
