@@ -37,6 +37,7 @@ builder.Services.BindConfig<Saml2Configuration>(builder.Configuration, "Saml2", 
         {
             saml2Configuration.SignAuthnRequest = entityDescriptor.IdPSsoDescriptor.WantAuthnRequestsSigned.Value;
         }
+        saml2Configuration.Issuer = builder.Configuration["Saml2:Issuer"];
     }
     else
     {
