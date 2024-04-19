@@ -8,6 +8,7 @@ using System.Security.Claims;
 using mysamlsp.Identity;
 using System.Web;
 using System;
+using mysamlsp.Models;
 
 namespace mysamlsp.Controllers
 {
@@ -124,7 +125,12 @@ namespace mysamlsp.Controllers
 
                 var relayStateQuery = binding.GetRelayStateQuery();
                 var returnUrl = relayStateQuery.ContainsKey(relayStateReturnUrl) ? relayStateQuery[relayStateReturnUrl] : Url.Content("~/");
-                return Redirect(returnUrl);
+                return View(new AssertionModel()
+                {
+                    UserName = saml2AuthnResponse.ClaimsIdentity.Name?? "No Name",
+                    Provider = "saml2",
+                });
+                //return Redirect(returnUrl);
             }
             catch (Exception ex)
             {
