@@ -5,9 +5,9 @@
 
 <script language="javascript">
     function getSamlInfo() {
-        return {
+        return JSON.stringify({
             "username": "@Model.UserName",
             "provider": "@Model.Provider",
-        }
+        })
     }
 </script>
